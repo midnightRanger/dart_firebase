@@ -97,11 +97,22 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void login() async {
     String message; 
-    try {
 
-    UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(email: emailController.text, password: passwordController.text);
+    UserCredential userCredential; 
+
+    try {
     
-    message = userCredential != null ? "Email: ${userCredential.user!.email}, ${userCredential.user!.displayName}" : "Sorry, something went wrong";
+    if (_isAnonymous) {
+     userCredential = await FirebaseAuth.instance.signInAnonymously();
+     message = "Успешная авторизация с временным аккаунтом";
+    }
+    else {
+      userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(email: emailController.text, password: passwordController.text);
+      message = userCredential != null ? "Email: ${userCredential.user!.email}, ${userCredential.user!.displayName}" : "Sorry, something went wrong";
+    }
+
+    
+
     } on FirebaseException catch (e) {
        message = getExceptionCode(e.code).exceptionMessage;
     }
@@ -285,10 +296,11 @@ class _MyHomePageState extends State<MyHomePage> {
                 SizedBox(width: 20),
                 IconButton(onPressed: () {
                   setState(() {
-                    !_isAnonymous;
+                    _isAnonymous = !_isAnonymous;
+                    print (_isAnonymous);
 
                   });
-                }, icon: _isAnonymous ? Icons.location_history_rounded)
+                }, icon: _isAnonymous ? Icon(Icons.location_history_rounded) : Icon(Icons.location_history_outlined))
             ],
           )]),
  
