@@ -336,29 +336,24 @@ class _MyHomePageState extends State<MyHomePage> {
                       ],
                     ),
 
-                    ListTile(
-                      title: const Text('Anonymously'),
-                      leading: Radio<AuthType>(
-                        value: AuthType.Anonymously,
-                        groupValue: currentAuthType,
-                        onChanged: (AuthType? value) {
-                          setState(() {
-                            currentAuthType = value;
-                          });
-                        },
-                      ),
+                    ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: AuthType.values.length,
+                      itemBuilder: (context, index) {
+                        return ListTile(
+                          title: Text(AuthType.values[index].name),
+                          leading: Radio<AuthType>(
+                            value: AuthType.values[index],
+                            groupValue: currentAuthType,
+                            onChanged: (AuthType? value) {
+                              setState(() {
+                                currentAuthType = value;
+                              });
+                            },
+                          ),
+                        );
+                      },
                     ),
-                    ListTile(
-                        title: const Text('Email and password'),
-                        leading: Radio<AuthType>(
-                          value: AuthType.EmailAndPassword,
-                          groupValue: currentAuthType,
-                          onChanged: (AuthType? value) {
-                            setState(() {
-                              currentAuthType = value;
-                            });
-                          },
-                        )),
                   ]),
                 ))));
   }
