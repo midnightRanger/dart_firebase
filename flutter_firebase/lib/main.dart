@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_firebase/firebase_options.dart';
+import 'package:flutter_firebase/utils/action_settings.dart';
 import 'package:flutter_firebase/utils/auth_type.dart';
 import 'package:flutter_firebase/utils/exception_codes.dart';
 import 'package:flutter_firebase/widget/dynamic_input_widget.dart';
@@ -122,6 +123,20 @@ class _MyHomePageState extends State<MyHomePage> {
                 : "Sorry, something went wrong";
           }
           break;
+
+        case AuthType.EmailSignLink:
+          {
+            message = "Non-null";
+
+            var emailAuth = emailController.text;
+            FirebaseAuth.instance
+                .sendSignInLinkToEmail(
+                    email: emailAuth, actionCodeSettings: getAcs.acs)
+                .catchError((onError) => message = "Что-то пошло не так..")
+                .then((value) => message = "Письмо отправлено на почту.");
+          }
+          break;
+
         default:
           {
             userCredential = await FirebaseAuth.instance
@@ -306,20 +321,44 @@ class _MyHomePageState extends State<MyHomePage> {
                               Text(registerAuthMode ? "Sign In" : "Regsiter"),
                         ),
                         SizedBox(width: 20),
-                        IconButton(
-                            onPressed: () {
-                              setState(() {
-                                _isAnonymous = !_isAnonymous;
-                                currentAuthType = _isAnonymous
-                                    ? AuthType.Anonymously
-                                    : AuthType.EmailAndPassword;
-                              });
-                            },
-                            icon: _isAnonymous
-                                ? Icon(Icons.location_history_rounded)
-                                : Icon(Icons.location_history_outlined))
+                        // IconButton(
+                        //     onPressed: () {
+                        //       setState(() {
+                        //         _isAnonymous = !_isAnonymous;
+                        //         currentAuthType = _isAnonymous
+                        //             ? AuthType.Anonymously
+                        //             : AuthType.EmailAndPassword;
+                        //       });
+                        //     },
+                        //     icon: _isAnonymous
+                        //         ? Icon(Icons.location_history_rounded)
+                        //         : Icon(Icons.location_history_outlined))
                       ],
-                    )
+                    ),
+
+                    ListTile(
+                      title: const Text('Anonymously'),
+                      leading: Radio<AuthType>(
+                        value: AuthType.Anonymously,
+                        groupValue: currentAuthType,
+                        onChanged: (AuthType? value) {
+                          setState(() {
+                            currentAuthType = value;
+                          });
+                        },
+                      ),
+                    ),
+                    ListTile(
+                        title: const Text('Email and password'),
+                        leading: Radio<AuthType>(
+                          value: AuthType.EmailAndPassword,
+                          groupValue: currentAuthType,
+                          onChanged: (AuthType? value) {
+                            setState(() {
+                              currentAuthType = value;
+                            });
+                          },
+                        )),
                   ]),
                 ))));
   }

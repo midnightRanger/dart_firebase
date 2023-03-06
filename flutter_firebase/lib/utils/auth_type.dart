@@ -1,4 +1,5 @@
 enum AuthType {
   EmailAndPassword,
-  Anonymously
+  Anonymously,
+  EmailSignLink
 }
