@@ -126,14 +126,29 @@ class _MyHomePageState extends State<MyHomePage> {
 
         case AuthType.EmailSignLink:
           {
-            message = "Non-null";
-
             var emailAuth = emailController.text;
+            message = "Non-null";
+            final actionCodeSettings = ActionCodeSettings(
+                // URL you want to redirect back to. The domain (www.example.com) for this
+                // URL must be whitelisted in the Firebase Console.
+                url:
+                    'https://flutterfirebasesample.page.link/iGuj?email=$emailAuth',
+                // This must be true
+                handleCodeInApp: true,
+                iOSBundleId: 'com.example.flutter_firebase',
+                androidPackageName: 'com.example.flutter_firebase',
+                // installIfNotAvailable
+                androidInstallApp: true,
+                // minimumVersion
+                androidMinimumVersion: '12');
+
             FirebaseAuth.instance
                 .sendSignInLinkToEmail(
-                    email: emailAuth, actionCodeSettings: getAcs.acs)
+                    email: emailAuth, actionCodeSettings: actionCodeSettings)
                 .catchError((onError) => message = "Что-то пошло не так..")
                 .then((value) => message = "Письмо отправлено на почту.");
+
+                
           }
           break;
 

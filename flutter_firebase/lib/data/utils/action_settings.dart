@@ -5,7 +5,7 @@ class getAcs {
   static final ActionCodeSettings acs = ActionCodeSettings(
     // URL you want to redirect back to. The domain (www.example.com) for this
     // URL must be whitelisted in the Firebase Console.
-    url: 'http://localhost:58655/#/',
+    url: 'https://flutterfirebasesample.page.link/iGuj?email',
     // This must be true
     handleCodeInApp: true,
     iOSBundleId: 'com.example.flutter_firebase',
