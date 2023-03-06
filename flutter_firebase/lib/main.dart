@@ -2,14 +2,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_firebase/firebase_options.dart';
+import 'package:flutter_firebase/utils/auth_type.dart';
 import 'package:flutter_firebase/utils/exception_codes.dart';
 import 'package:flutter_firebase/widget/dynamic_input_widget.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  
+
   runApp(const MyApp());
 }
 
@@ -41,7 +42,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
 
-   // Define Form key
+  // Define Form key
   final _formKey = GlobalKey<FormState>();
 
   // Instantiate validator
@@ -65,6 +66,8 @@ class _MyHomePageState extends State<MyHomePage> {
   bool registerAuthMode = false;
   bool _isAnonymous = false;
 
+  AuthType? currentAuthType;
+
   @override
   void initState() {
     emailController = TextEditingController();
@@ -80,7 +83,7 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
   }
 
-   @override
+  @override
   void dispose() {
     super.dispose();
 
@@ -96,46 +99,62 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void login() async {
-    String message; 
+    String message;
 
-    UserCredential userCredential; 
+    UserCredential userCredential;
 
     try {
-    
-    if (_isAnonymous) {
-     userCredential = await FirebaseAuth.instance.signInAnonymously();
-     message = "Успешная авторизация с временным аккаунтом";
-    }
-    else {
-      userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(email: emailController.text, password: passwordController.text);
-      message = userCredential != null ? "Email: ${userCredential.user!.email}, ${userCredential.user!.displayName}" : "Sorry, something went wrong";
-    }
-
-    
-
+      switch (currentAuthType) {
+        case AuthType.Anonymously:
+          {
+            userCredential = await FirebaseAuth.instance.signInAnonymously();
+            message = "Успешная авторизация с временным аккаунтом";
+          }
+          break;
+        case AuthType.EmailAndPassword:
+          {
+            userCredential = await FirebaseAuth.instance
+                .signInWithEmailAndPassword(
+                    email: emailController.text,
+                    password: passwordController.text);
+            message = userCredential != null
+                ? "Email: ${userCredential.user!.email}, ${userCredential.user!.displayName}"
+                : "Sorry, something went wrong";
+          }
+          break;
+        default:
+          {
+            userCredential = await FirebaseAuth.instance
+                .signInWithEmailAndPassword(
+                    email: emailController.text,
+                    password: passwordController.text);
+            message = userCredential != null
+                ? "Email: ${userCredential.user!.email}, ${userCredential.user!.displayName}"
+                : "Sorry, something went wrong";
+          }
+      }
     } on FirebaseException catch (e) {
-       message = getExceptionCode(e.code).exceptionMessage;
+      message = getExceptionCode(e.code).exceptionMessage;
     }
 
-       AlertDialog alert = AlertDialog(
-          title: const Text('Information: '),
-          content: Text(message),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                  Navigator.of(context, rootNavigator: true).pop();
-                
-              },
-              child: const Text('OK'),
-            ),
-          ],
-        );
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return alert;
+    AlertDialog alert = AlertDialog(
+      title: const Text('Information: '),
+      content: Text(message),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () {
+            Navigator.of(context, rootNavigator: true).pop();
           },
-        );
+          child: const Text('OK'),
+        ),
+      ],
+    );
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
+    );
   }
 
 // Create a function that'll toggle the password's visibility on the relevant icon tap.
@@ -144,8 +163,6 @@ class _MyHomePageState extends State<MyHomePage> {
       obscureText = !obscureText;
     });
   }
-
-
 
   void _incrementCounter() {
     setState(() {
@@ -156,155 +173,154 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-      ),
-      body: Center(
-        child:
-
-       Padding(
-      padding: const EdgeInsets.all(10),
-      child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-
-              // Email
-              DynamicInputWidget(
-                controller: emailController,
-                obscureText: false,
-                focusNode: emailFocusNode,
-                toggleObscureText: null,
-                prefIcon: const Icon(Icons.mail),
-                labelText: "Enter Email Address",
-                textInputAction: TextInputAction.next,
-                isNonPasswordField: true,
-              ),
-              const SizedBox(
-                height: 20,
-              ),
-              // Username
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 500),
-                height: registerAuthMode ? 65 : 0,
-                child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 500),
-                  opacity: registerAuthMode ? 1 : 0,
-                  child: DynamicInputWidget(
-                    controller: usernameController,
-                    obscureText: false,
-                    focusNode: usernameFocusNode,
-                    toggleObscureText: null,
-                    prefIcon: const Icon(Icons.person),
-                    labelText: "Enter Username(Optional)",
-                    textInputAction: TextInputAction.next,
-                    isNonPasswordField: true,
-                  ),
-                ),
-              ),
-
-              AnimatedOpacity(
-                duration: const Duration(milliseconds: 500),
-                opacity: registerAuthMode ? 1 : 0,
-                child: const SizedBox(
-                  height: 20,
-                ),
-              ),
-
-              DynamicInputWidget(
-                controller: passwordController,
-                labelText: "Enter Password",
-                obscureText: obscureText,
-                focusNode: passwordFocusNode,
-                toggleObscureText: toggleObscureText,
-                prefIcon: const Icon(Icons.password),
-                textInputAction: registerAuthMode
-                    ? TextInputAction.next
-                    : TextInputAction.done,
-                isNonPasswordField: false,
-              ),
-
-              const SizedBox(
-                height: 20,
-              ),
-
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 500),
-                height: registerAuthMode ? 65 : 0,
-                child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 500),
-                  opacity: registerAuthMode ? 1 : 0,
-                  child: DynamicInputWidget(
-                    controller: confirmPasswordController,
-                    focusNode: confirmPasswordFocusNode,
-                    isNonPasswordField: false,
-                    labelText: "Confirm Password",
-                    obscureText: obscureText,
-                    prefIcon: const Icon(Icons.password),
-                    textInputAction: TextInputAction.done,
-                    toggleObscureText: toggleObscureText,
-                    
-                  ),
-                ),
-              ),
-              const SizedBox(
-                height: 20,
-              ),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () {},
-                    child: const Text('Cancel'),
-                  ),
-                  const SizedBox(
-                    width: 20,
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      if (!registerAuthMode) {
-                        login();
-                      }
-                       
-                        
-                    },
-                    child: Text(registerAuthMode ? 'Register' : 'Sign In'),
-                    style: ButtonStyle(
-                      elevation: MaterialStateProperty.all(8.0),
+        appBar: AppBar(
+          title: Text(widget.title),
+        ),
+        body: Center(
+            child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Form(
+                  key: _formKey,
+                  child: Column(children: [
+                    // Email
+                    DynamicInputWidget(
+                      controller: emailController,
+                      obscureText: false,
+                      focusNode: emailFocusNode,
+                      toggleObscureText: null,
+                      prefIcon: const Icon(Icons.mail),
+                      labelText: "Enter Email Address",
+                      textInputAction: TextInputAction.next,
+                      isNonPasswordField: true,
                     ),
-                  ),
-                ],
-              ),
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    // Username
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 500),
+                      height: registerAuthMode ? 65 : 0,
+                      child: AnimatedOpacity(
+                        duration: const Duration(milliseconds: 500),
+                        opacity: registerAuthMode ? 1 : 0,
+                        child: DynamicInputWidget(
+                          controller: usernameController,
+                          obscureText: false,
+                          focusNode: usernameFocusNode,
+                          toggleObscureText: null,
+                          prefIcon: const Icon(Icons.person),
+                          labelText: "Enter Username(Optional)",
+                          textInputAction: TextInputAction.next,
+                          isNonPasswordField: true,
+                        ),
+                      ),
+                    ),
 
-              const SizedBox(
-                height: 20,
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(registerAuthMode
-                      ? "Already Have an account?"
-                      : "Don't have an account yet?"),
-                  TextButton(
-                    onPressed: () {
-                      setState(() => registerAuthMode = !registerAuthMode);
-                    },
-                    child: Text(registerAuthMode ? "Sign In" : "Regsiter"),
-                  ),
-                
-                SizedBox(width: 20),
-                IconButton(onPressed: () {
-                  setState(() {
-                    _isAnonymous = !_isAnonymous;
-                    print (_isAnonymous);
+                    AnimatedOpacity(
+                      duration: const Duration(milliseconds: 500),
+                      opacity: registerAuthMode ? 1 : 0,
+                      child: const SizedBox(
+                        height: 20,
+                      ),
+                    ),
 
-                  });
-                }, icon: _isAnonymous ? Icon(Icons.location_history_rounded) : Icon(Icons.location_history_outlined))
-            ],
-          )]),
- 
+                    DynamicInputWidget(
+                      controller: passwordController,
+                      labelText: "Enter Password",
+                      obscureText: obscureText,
+                      focusNode: passwordFocusNode,
+                      toggleObscureText: toggleObscureText,
+                      prefIcon: const Icon(Icons.password),
+                      textInputAction: registerAuthMode
+                          ? TextInputAction.next
+                          : TextInputAction.done,
+                      isNonPasswordField: false,
+                    ),
 
-      ))));
+                    const SizedBox(
+                      height: 20,
+                    ),
+
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 500),
+                      height: registerAuthMode ? 65 : 0,
+                      child: AnimatedOpacity(
+                        duration: const Duration(milliseconds: 500),
+                        opacity: registerAuthMode ? 1 : 0,
+                        child: DynamicInputWidget(
+                          controller: confirmPasswordController,
+                          focusNode: confirmPasswordFocusNode,
+                          isNonPasswordField: false,
+                          labelText: "Confirm Password",
+                          obscureText: obscureText,
+                          prefIcon: const Icon(Icons.password),
+                          textInputAction: TextInputAction.done,
+                          toggleObscureText: toggleObscureText,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(
+                      height: 20,
+                    ),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () {},
+                          child: const Text('Cancel'),
+                        ),
+                        const SizedBox(
+                          width: 20,
+                        ),
+                        ElevatedButton(
+                          onPressed: () {
+                            if (!registerAuthMode) {
+                              login();
+                            }
+                          },
+                          child:
+                              Text(registerAuthMode ? 'Register' : 'Sign In'),
+                          style: ButtonStyle(
+                            elevation: MaterialStateProperty.all(8.0),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(registerAuthMode
+                            ? "Already Have an account?"
+                            : "Don't have an account yet?"),
+                        TextButton(
+                          onPressed: () {
+                            setState(
+                                () => registerAuthMode = !registerAuthMode);
+                          },
+                          child:
+                              Text(registerAuthMode ? "Sign In" : "Regsiter"),
+                        ),
+                        SizedBox(width: 20),
+                        IconButton(
+                            onPressed: () {
+                              setState(() {
+                                _isAnonymous = !_isAnonymous;
+                                currentAuthType = _isAnonymous
+                                    ? AuthType.Anonymously
+                                    : AuthType.EmailAndPassword;
+                              });
+                            },
+                            icon: _isAnonymous
+                                ? Icon(Icons.location_history_rounded)
+                                : Icon(Icons.location_history_outlined))
+                      ],
+                    )
+                  ]),
+                ))));
   }
 }
